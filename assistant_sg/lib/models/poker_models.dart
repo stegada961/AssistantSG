@@ -120,7 +120,7 @@ class AppSettings {
       ante: 0.0,
       iterations: 20000,
       preset: preset,
-      openRaisePctByPos: _presetOpen(preset),
+      openRaisePctByPos: presetOpenRaise(preset),
       callBufferEarly: 7,
       callBufferLate: 10,
       preflopRaiseEqBase: 46,
@@ -132,7 +132,7 @@ class AppSettings {
     );
   }
 
-  static List<double> _presetOpen(StylePreset p) {
+  static List<double> presetOpenRaise(StylePreset p) {
     // 9-max: UTG..BB
     switch (p) {
       case StylePreset.tight:
@@ -209,7 +209,7 @@ class AppSettings {
     final open = (m["openRaisePctByPos"] as List?)
             ?.map((x) => (x as num).toDouble())
             .toList() ??
-        _presetOpen(preset);
+        presetOpenRaise(preset);
 
     // Garantiamo 9 valori
     final open9 = List<double>.from(open);

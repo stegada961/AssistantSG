@@ -98,7 +98,7 @@ class _SetupScreenState extends State<SetupScreen> {
         selectedProfile = null;
         s = s.copyWith(preset: preset);
         // aggiorniamo anche openRaise coerente al preset (per non creare mismatch)
-        s = s.copyWith(openRaisePctByPos: AppSettings._presetOpen(preset));
+        s = s.copyWith(openRaisePctByPos: AppSettings.presetOpenRaise(preset));
       });
       await _saveSettings();
       return;

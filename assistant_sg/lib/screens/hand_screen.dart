@@ -121,7 +121,6 @@ class _HandScreenState extends State<HandScreen> {
 
   bool _flopComplete() => f1.complete && f2.complete && f3.complete;
   bool _turnComplete() => t.complete;
-  bool _riverComplete() => r.complete;
 
   double? _tryNum(String s) {
     final t = s.trim();
