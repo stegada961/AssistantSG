@@ -5,59 +5,180 @@ import 'hand_screen.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
+
   @override
   State<SetupScreen> createState() => _SetupScreenState();
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-  AppSettings s = AppSettings.defaults();
-  bool loaded = false;
+  bool loading = true;
 
-  final _sbCtl = TextEditingController();
-  final _bbCtl = TextEditingController();
-  final _anteCtl = TextEditingController();
+  late AppSettings s;
+  List<StyleProfile> profiles = [];
+  String styleDropdownValue = "preset:balanced"; // default
+  StyleProfile? selectedProfile;
+
+  final sbCtl = TextEditingController();
+  final bbCtl = TextEditingController();
+  final anteCtl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    SettingsStore.load().then((v) {
-      setState(() {
-        s = v;
-        loaded = true;
-        _sbCtl.text = s.sb.toString();
-        _bbCtl.text = s.bb.toString();
-        _anteCtl.text = s.ante.toString();
-      });
-    });
+    _loadAll();
   }
 
   @override
   void dispose() {
-    _sbCtl.dispose();
-    _bbCtl.dispose();
-    _anteCtl.dispose();
+    sbCtl.dispose();
+    bbCtl.dispose();
+    anteCtl.dispose();
     super.dispose();
   }
 
-  Future<void> _save() async {
-    final sb = double.tryParse(_sbCtl.text) ?? s.sb;
-    final bb = double.tryParse(_bbCtl.text) ?? s.bb;
-    final ante = double.tryParse(_anteCtl.text) ?? s.ante;
+  Future<void> _loadAll() async {
+    final ss = await SettingsStore.load();
+    final pp = await SettingsStore.loadProfiles();
+    setState(() {
+      s = ss;
+      profiles = pp;
+      sbCtl.text = s.sb.toStringAsFixed(2);
+      bbCtl.text = s.bb.toStringAsFixed(2);
+      anteCtl.text = s.ante.toStringAsFixed(2);
 
-    final ss = s.copyWith(sb: sb, bb: bb, ante: ante);
-    setState(() => s = ss);
-    await SettingsStore.save(ss);
+      // dropdown iniziale coerente
+      styleDropdownValue = "preset:${s.preset.name}";
+      selectedProfile = null;
+      loading = false;
+    });
   }
 
-  Widget _sectionTitle(String t) => Padding(
-        padding: const EdgeInsets.only(top: 10, bottom: 6),
-        child: Text(t,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      );
+  Future<void> _saveSettings() async {
+    await SettingsStore.save(s);
+  }
+
+  List<DropdownMenuItem<String>> _styleItems() {
+    final items = <DropdownMenuItem<String>>[];
+
+    for (final p in StylePreset.values) {
+      items.add(DropdownMenuItem(
+        value: "preset:${p.name}",
+        child: Text("Preset: ${p.name}"),
+      ));
+    }
+
+    if (profiles.isNotEmpty) {
+      items.add(const DropdownMenuItem(
+        value: "sep",
+        enabled: false,
+        child: Text("— Profili salvati —"),
+      ));
+      for (final pr in profiles) {
+        items.add(DropdownMenuItem(
+          value: "profile:${pr.name}",
+          child: Text(pr.name),
+        ));
+      }
+    }
+
+    return items;
+  }
+
+  Future<void> _applyStyleSelection(String v) async {
+    if (v == "sep") return;
+
+    setState(() {
+      styleDropdownValue = v;
+    });
+
+    if (v.startsWith("preset:")) {
+      final name = v.split(":")[1];
+      final preset = StylePreset.values.firstWhere((x) => x.name == name);
+      setState(() {
+        selectedProfile = null;
+        s = s.copyWith(preset: preset);
+        // aggiorniamo anche openRaise coerente al preset (per non creare mismatch)
+        s = s.copyWith(openRaisePctByPos: AppSettings._presetOpen(preset));
+      });
+      await _saveSettings();
+      return;
+    }
+
+    if (v.startsWith("profile:")) {
+      final name = v.substring("profile:".length);
+      final pr = profiles.firstWhere((x) => x.name == name);
+      setState(() {
+        selectedProfile = pr;
+        s = SettingsStore.applyStyleToSettings(s, pr);
+      });
+      await _saveSettings();
+    }
+  }
+
+  Future<void> _saveProfileDialog() async {
+    final ctl = TextEditingController(text: selectedProfile?.name ?? "SG");
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Salva stile"),
+        content: TextField(
+          controller: ctl,
+          decoration: const InputDecoration(hintText: "Nome profilo (es. SG)"),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Annulla")),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, ctl.text.trim()),
+            child: const Text("Salva"),
+          ),
+        ],
+      ),
+    );
+
+    if (name == null) return;
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+
+    await SettingsStore.upsertProfile(trimmed, s);
+    final pp = await SettingsStore.loadProfiles();
+
+    setState(() {
+      profiles = pp;
+      styleDropdownValue = "profile:$trimmed";
+      selectedProfile = profiles.firstWhere((p) => p.name.toLowerCase() == trimmed.toLowerCase());
+    });
+  }
+
+  Widget _slider({
+    required String title,
+    required double value,
+    required double min,
+    required double max,
+    required int decimals,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("$title: ${value.toStringAsFixed(decimals)}"),
+        Slider(
+          value: value.clamp(min, max),
+          min: min,
+          max: max,
+          onChanged: (v) async {
+            onChanged(v);
+            setState(() {});
+            await _saveSettings();
+          },
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (!loaded) {
+    if (loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -66,313 +187,269 @@ class _SetupScreenState extends State<SetupScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _sectionTitle("Tavolo di gioco attuale"),
+          const Text("Tavolo di gioco attuale", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+
           Row(
             children: [
-              const Expanded(child: Text("Modalità")),
+              const Text("Modalità"),
+              const SizedBox(width: 16),
               SegmentedButton<GameMode>(
                 segments: const [
                   ButtonSegment(value: GameMode.cash, label: Text("Cash")),
-                  ButtonSegment(
-                      value: GameMode.tournament, label: Text("Torneo")),
+                  ButtonSegment(value: GameMode.torneo, label: Text("Torneo")),
                 ],
                 selected: {s.mode},
-                onSelectionChanged: (v) async {
-                  setState(() => s = s.copyWith(mode: v.first));
-                  await _save();
+                onSelectionChanged: (set) async {
+                  setState(() => s = s.copyWith(mode: set.first));
+                  await _saveSettings();
                 },
               ),
             ],
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 10),
+
           Row(
             children: [
-              const Expanded(child: Text("Giocatori al tavolo (max 9)")),
+              Expanded(child: Text("Giocatori al tavolo (max 9): ${s.playersAtTable}")),
               IconButton(
+                onPressed: () async {
+                  setState(() => s = s.copyWith(playersAtTable: (s.playersAtTable - 1).clamp(2, 9)));
+                  await _saveSettings();
+                },
                 icon: const Icon(Icons.remove_circle_outline),
-                onPressed: () async {
-                  setState(() => s = s.copyWith(
-                      playersAtTable: (s.playersAtTable - 1).clamp(2, 9)));
-                  await _save();
-                },
               ),
-              Text("${s.playersAtTable}",
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
               IconButton(
-                icon: const Icon(Icons.add_circle_outline),
                 onPressed: () async {
-                  setState(() => s = s.copyWith(
-                      playersAtTable: (s.playersAtTable + 1).clamp(2, 9)));
-                  await _save();
+                  setState(() => s = s.copyWith(playersAtTable: (s.playersAtTable + 1).clamp(2, 9)));
+                  await _saveSettings();
                 },
+                icon: const Icon(Icons.add_circle_outline),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 10),
+
           Row(
             children: [
               const Expanded(child: Text("Posizione iniziale (tu)")),
               DropdownButton<Pos9Max>(
                 value: s.startPos,
                 items: Pos9Max.values
-                    .map(
-                        (p) => DropdownMenuItem(value: p, child: Text(p.label)))
+                    .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
                     .toList(),
                 onChanged: (v) async {
                   if (v == null) return;
                   setState(() => s = s.copyWith(startPos: v));
-                  await _save();
+                  await _saveSettings();
                 },
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Expanded(child: Text("SB")),
-              SizedBox(
-                  width: 120,
-                  child: TextField(
-                      controller: _sbCtl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      onChanged: (_) => _save())),
-            ],
+
+          const SizedBox(height: 10),
+
+          TextField(
+            controller: sbCtl,
+            decoration: const InputDecoration(labelText: "SB"),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (x) async {
+              final v = double.tryParse(x) ?? s.sb;
+              setState(() => s = s.copyWith(sb: v));
+              await _saveSettings();
+            },
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Expanded(child: Text("BB")),
-              SizedBox(
-                  width: 120,
-                  child: TextField(
-                      controller: _bbCtl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      onChanged: (_) => _save())),
-            ],
+          TextField(
+            controller: bbCtl,
+            decoration: const InputDecoration(labelText: "BB"),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (x) async {
+              final v = double.tryParse(x) ?? s.bb;
+              setState(() => s = s.copyWith(bb: v));
+              await _saveSettings();
+            },
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Expanded(
-                  child: Text("Ante (tutti mettono prima della mano)")),
-              SizedBox(
-                  width: 120,
-                  child: TextField(
-                      controller: _anteCtl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      onChanged: (_) => _save())),
-            ],
+          TextField(
+            controller: anteCtl,
+            decoration: const InputDecoration(labelText: "Ante (tutti mettono prima della mano)"),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (x) async {
+              final v = double.tryParse(x) ?? s.ante;
+              setState(() => s = s.copyWith(ante: v));
+              await _saveSettings();
+            },
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 10),
+
           Row(
             children: [
-              const Expanded(
-                  child:
-                      Text("Simulazioni (più = più accurato, ma più lento)")),
+              const Expanded(child: Text("Simulazioni (più = più accurato, ma più lento)")),
               DropdownButton<int>(
                 value: s.iterations,
-                items: const [
-                  DropdownMenuItem(value: 5000, child: Text("5000")),
-                  DropdownMenuItem(value: 10000, child: Text("10000")),
-                  DropdownMenuItem(value: 20000, child: Text("20000")),
-                ],
-                onChanged: (v) async {
-                  if (v == null) return;
-                  setState(() => s = s.copyWith(iterations: v));
-                  await _save();
-                },
-              ),
-            ],
-          ),
-          const Divider(height: 28),
-          _sectionTitle("Stile di gioco + parametrizzazione (si salva sempre)"),
-          Row(
-            children: [
-              const Expanded(child: Text("Preset ranges")),
-              DropdownButton<StylePreset>(
-                value: s.preset,
-                items: StylePreset.values
-                    .map((p) => DropdownMenuItem(value: p, child: Text(p.name)))
+                items: const [5000, 10000, 20000, 40000]
+                    .map((v) => DropdownMenuItem(value: v, child: Text("$v")))
                     .toList(),
                 onChanged: (v) async {
                   if (v == null) return;
-                  final open = AppSettings.presetOpenRaise(v);
-                  setState(
-                      () => s = s.copyWith(preset: v, openRaisePctByPos: open));
-                  await _save();
+                  setState(() => s = s.copyWith(iterations: v));
+                  await _saveSettings();
                 },
               ),
             ],
           ),
+
+          const Divider(height: 32),
+
+          const Text("Stile di gioco + parametrizzazione (si salva sempre)",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          const Text("Open-raise % per posizione (modificabile)"),
-          const SizedBox(height: 8),
-          ...List.generate(Pos9Max.values.length, (i) {
-            final p = Pos9Max.values[i];
-            final pct = s.openRaisePctByPos[i];
-            return Row(
-              children: [
-                SizedBox(width: 70, child: Text(p.label)),
-                Expanded(
-                  child: Slider(
-                    value: pct.clamp(0, 80),
-                    min: 0,
-                    max: 80,
-                    divisions: 80,
-                    label: "${pct.toStringAsFixed(0)}%",
-                    onChanged: (v) async {
-                      final lst = List<double>.from(s.openRaisePctByPos);
-                      lst[i] = v;
-                      setState(() => s = s.copyWith(openRaisePctByPos: lst));
-                      await _save();
-                    },
-                  ),
+
+          Row(
+            children: [
+              const Expanded(child: Text("Stile di gioco")),
+              DropdownButton<String>(
+                value: styleDropdownValue,
+                items: _styleItems(),
+                onChanged: (v) async {
+                  if (v == null) return;
+                  await _applyStyleSelection(v);
+                },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _saveProfileDialog,
+                  icon: const Icon(Icons.save),
+                  label: const Text("Salva stile…"),
                 ),
-                SizedBox(width: 52, child: Text("${pct.toStringAsFixed(0)}%")),
-              ],
-            );
-          }),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: selectedProfile == null
+                      ? null
+                      : () async {
+                          await SettingsStore.upsertProfile(selectedProfile!.name, s);
+                          final pp = await SettingsStore.loadProfiles();
+                          setState(() => profiles = pp);
+                        },
+                  icon: const Icon(Icons.system_update_alt),
+                  label: const Text("Sovrascrivi"),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          const Text("Open-raise % per posizione (modificabile)", style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const Expanded(child: Text("Call buffer Early (UTG…HJ)")),
-              SizedBox(
-                  width: 70,
-                  child: Text("${s.callBufferEarly.toStringAsFixed(0)}%")),
-            ],
-          ),
-          Slider(
-            value: s.callBufferEarly.clamp(0, 30),
-            min: 0,
-            max: 30,
-            divisions: 30,
-            label: s.callBufferEarly.toStringAsFixed(0),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(callBufferEarly: v));
-              await _save();
-            },
-          ),
-          Row(
-            children: [
-              const Expanded(child: Text("Call buffer Late (CO/BTN/SB)")),
-              SizedBox(
-                  width: 70,
-                  child: Text("${s.callBufferLate.toStringAsFixed(0)}%")),
-            ],
-          ),
-          Slider(
-            value: s.callBufferLate.clamp(0, 40),
-            min: 0,
-            max: 40,
-            divisions: 40,
-            label: s.callBufferLate.toStringAsFixed(0),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(callBufferLate: v));
-              await _save();
-            },
-          ),
-          const Divider(height: 28),
-          _sectionTitle("Soglie equity (consigli più chiari)"),
-          const Text(
-              "Preflop: soglia = base - perOpp*(opp-1). Più avversari = soglie più basse."),
-          const SizedBox(height: 6),
-          Text("Raise base: ${s.preflopRaiseEqBase.toStringAsFixed(0)}%"),
-          Slider(
-            value: s.preflopRaiseEqBase.clamp(30, 70),
-            min: 30,
-            max: 70,
-            divisions: 40,
-            label: s.preflopRaiseEqBase.toStringAsFixed(0),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(preflopRaiseEqBase: v));
-              await _save();
-            },
-          ),
-          Text("Raise perOpp: ${s.preflopRaiseEqPerOpp.toStringAsFixed(1)}"),
-          Slider(
-            value: s.preflopRaiseEqPerOpp.clamp(0, 8),
-            min: 0,
-            max: 8,
-            divisions: 80,
-            label: s.preflopRaiseEqPerOpp.toStringAsFixed(1),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(preflopRaiseEqPerOpp: v));
-              await _save();
-            },
-          ),
-          Text("Call base: ${s.preflopCallEqBase.toStringAsFixed(0)}%"),
-          Slider(
-            value: s.preflopCallEqBase.clamp(20, 60),
-            min: 20,
-            max: 60,
-            divisions: 40,
-            label: s.preflopCallEqBase.toStringAsFixed(0),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(preflopCallEqBase: v));
-              await _save();
-            },
-          ),
-          Text("Call perOpp: ${s.preflopCallEqPerOpp.toStringAsFixed(1)}"),
-          Slider(
-            value: s.preflopCallEqPerOpp.clamp(0, 8),
-            min: 0,
-            max: 8,
-            divisions: 80,
-            label: s.preflopCallEqPerOpp.toStringAsFixed(1),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(preflopCallEqPerOpp: v));
-              await _save();
-            },
-          ),
-          const SizedBox(height: 10),
-          const Text(
-              "Postflop (se POT/BET non inseriti → modalità veloce solo equity)"),
-          Text("Raise: ${s.postflopNoBetRaiseEq.toStringAsFixed(0)}%"),
-          Slider(
-            value: s.postflopNoBetRaiseEq.clamp(30, 90),
-            min: 30,
-            max: 90,
-            divisions: 60,
-            label: s.postflopNoBetRaiseEq.toStringAsFixed(0),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(postflopNoBetRaiseEq: v));
-              await _save();
-            },
-          ),
-          Text("Call/Check: ${s.postflopNoBetCallEq.toStringAsFixed(0)}%"),
-          Slider(
-            value: s.postflopNoBetCallEq.clamp(10, 80),
-            min: 10,
-            max: 80,
-            divisions: 70,
-            label: s.postflopNoBetCallEq.toStringAsFixed(0),
-            onChanged: (v) async {
-              setState(() => s = s.copyWith(postflopNoBetCallEq: v));
-              await _save();
-            },
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 52,
-            child: FilledButton(
-              onPressed: () async {
-                await _save();
-                if (!context.mounted) return;
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => HandScreen(settings: s)));
+
+          for (int i = 0; i < 9; i++) ...[
+            _slider(
+              title: Pos9Max.values[i].label,
+              value: s.openRaisePctByPos[i],
+              min: 0,
+              max: 60,
+              decimals: 0,
+              onChanged: (v) {
+                final list = List<double>.from(s.openRaisePctByPos);
+                list[i] = v;
+                s = s.copyWith(openRaisePctByPos: list);
               },
-              child: const Text("INIZIA (NUOVA MANO)"),
+            ),
+          ],
+
+          const Divider(height: 32),
+
+          const Text("Soglie equity (consigli più chiari)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          const Text("Preflop: soglia = base - perOpp*(opp-1). Più avversari = soglie più basse."),
+
+          _slider(
+            title: "Raise base (%)",
+            value: s.preflopRaiseEqBase,
+            min: 30,
+            max: 65,
+            decimals: 0,
+            onChanged: (v) => s = s.copyWith(preflopRaiseEqBase: v),
+          ),
+          _slider(
+            title: "Raise perOpp",
+            value: s.preflopRaiseEqPerOpp,
+            min: 0,
+            max: 6,
+            decimals: 1,
+            onChanged: (v) => s = s.copyWith(preflopRaiseEqPerOpp: v),
+          ),
+          _slider(
+            title: "Call base (%)",
+            value: s.preflopCallEqBase,
+            min: 20,
+            max: 55,
+            decimals: 0,
+            onChanged: (v) => s = s.copyWith(preflopCallEqBase: v),
+          ),
+          _slider(
+            title: "Call perOpp",
+            value: s.preflopCallEqPerOpp,
+            min: 0,
+            max: 6,
+            decimals: 1,
+            onChanged: (v) => s = s.copyWith(preflopCallEqPerOpp: v),
+          ),
+
+          const SizedBox(height: 16),
+
+          const Text("Postflop (se POT/BET non inseriti → modalità veloce solo equity)",
+              style: TextStyle(fontWeight: FontWeight.bold)),
+
+          _slider(
+            title: "Raise (%)",
+            value: s.postflopNoBetRaiseEq,
+            min: 40,
+            max: 85,
+            decimals: 0,
+            onChanged: (v) => s = s.copyWith(postflopNoBetRaiseEq: v),
+          ),
+          _slider(
+            title: "Call/Check (%)",
+            value: s.postflopNoBetCallEq,
+            min: 15,
+            max: 70,
+            decimals: 0,
+            onChanged: (v) => s = s.copyWith(postflopNoBetCallEq: v),
+          ),
+
+          const SizedBox(height: 18),
+
+          FilledButton(
+            onPressed: () async {
+              await _saveSettings();
+              if (!context.mounted) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => HandScreen(settings: s)),
+              );
+            },
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Text("INIZIA (NUOVA MANO)", style: TextStyle(fontSize: 18)),
             ),
           ),
+
           const SizedBox(height: 10),
-          const Text(
-            "Nota: i pulsanti RAISE/CALL/FOLD NON bloccano nulla.\n"
-            "Se fai CALL/CHECK puoi sempre andare avanti di street.",
-            style: TextStyle(fontSize: 12),
-          ),
+          const Text("Nota: i pulsanti RAISE/CALL/FOLD NON bloccano nulla. Se fai CALL/CHECK puoi sempre andare avanti di street."),
+          const SizedBox(height: 20),
         ],
       ),
     );
