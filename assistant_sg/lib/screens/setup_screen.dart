@@ -127,7 +127,9 @@ class _SetupScreenState extends State<SetupScreen> {
           decoration: const InputDecoration(hintText: "Nome profilo (es. SG)"),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Annulla")),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Annulla")),
           FilledButton(
             onPressed: () => Navigator.pop(context, ctl.text.trim()),
             child: const Text("Salva"),
@@ -146,7 +148,8 @@ class _SetupScreenState extends State<SetupScreen> {
     setState(() {
       profiles = pp;
       styleDropdownValue = "profile:$trimmed";
-      selectedProfile = profiles.firstWhere((p) => p.name.toLowerCase() == trimmed.toLowerCase());
+      selectedProfile = profiles
+          .firstWhere((p) => p.name.toLowerCase() == trimmed.toLowerCase());
     });
   }
 
@@ -187,9 +190,9 @@ class _SetupScreenState extends State<SetupScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text("Tavolo di gioco attuale", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text("Tavolo di gioco attuale",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           Row(
             children: [
               const Text("Modalità"),
@@ -207,38 +210,39 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
-              Expanded(child: Text("Giocatori al tavolo (max 9): ${s.playersAtTable}")),
+              Expanded(
+                  child:
+                      Text("Giocatori al tavolo (max 9): ${s.playersAtTable}")),
               IconButton(
                 onPressed: () async {
-                  setState(() => s = s.copyWith(playersAtTable: (s.playersAtTable - 1).clamp(2, 9)));
+                  setState(() => s = s.copyWith(
+                      playersAtTable: (s.playersAtTable - 1).clamp(2, 9)));
                   await _saveSettings();
                 },
                 icon: const Icon(Icons.remove_circle_outline),
               ),
               IconButton(
                 onPressed: () async {
-                  setState(() => s = s.copyWith(playersAtTable: (s.playersAtTable + 1).clamp(2, 9)));
+                  setState(() => s = s.copyWith(
+                      playersAtTable: (s.playersAtTable + 1).clamp(2, 9)));
                   await _saveSettings();
                 },
                 icon: const Icon(Icons.add_circle_outline),
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
               const Expanded(child: Text("Posizione iniziale (tu)")),
               DropdownButton<Pos9Max>(
                 value: s.startPos,
                 items: Pos9Max.values
-                    .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
+                    .map(
+                        (p) => DropdownMenuItem(value: p, child: Text(p.label)))
                     .toList(),
                 onChanged: (v) async {
                   if (v == null) return;
@@ -248,9 +252,7 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
           TextField(
             controller: sbCtl,
             decoration: const InputDecoration(labelText: "SB"),
@@ -273,7 +275,8 @@ class _SetupScreenState extends State<SetupScreen> {
           ),
           TextField(
             controller: anteCtl,
-            decoration: const InputDecoration(labelText: "Ante (tutti mettono prima della mano)"),
+            decoration: const InputDecoration(
+                labelText: "Ante (tutti mettono prima della mano)"),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (x) async {
               final v = double.tryParse(x) ?? s.ante;
@@ -281,12 +284,12 @@ class _SetupScreenState extends State<SetupScreen> {
               await _saveSettings();
             },
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
-              const Expanded(child: Text("Simulazioni (più = più accurato, ma più lento)")),
+              const Expanded(
+                  child:
+                      Text("Simulazioni (più = più accurato, ma più lento)")),
               DropdownButton<int>(
                 value: s.iterations,
                 items: const [5000, 10000, 20000, 40000]
@@ -300,13 +303,10 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
             ],
           ),
-
           const Divider(height: 32),
-
           const Text("Stile di gioco + parametrizzazione (si salva sempre)",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           Row(
             children: [
               const Expanded(child: Text("Stile di gioco")),
@@ -320,9 +320,7 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
               Expanded(
@@ -338,7 +336,8 @@ class _SetupScreenState extends State<SetupScreen> {
                   onPressed: selectedProfile == null
                       ? null
                       : () async {
-                          await SettingsStore.upsertProfile(selectedProfile!.name, s);
+                          await SettingsStore.upsertProfile(
+                              selectedProfile!.name, s);
                           final pp = await SettingsStore.loadProfiles();
                           setState(() => profiles = pp);
                         },
@@ -348,12 +347,10 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          const Text("Open-raise % per posizione (modificabile)", style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text("Open-raise % per posizione (modificabile)",
+              style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-
           for (int i = 0; i < 9; i++) ...[
             _slider(
               title: Pos9Max.values[i].label,
@@ -368,13 +365,12 @@ class _SetupScreenState extends State<SetupScreen> {
               },
             ),
           ],
-
           const Divider(height: 32),
-
-          const Text("Soglie equity (consigli più chiari)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text("Soglie equity (consigli più chiari)",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          const Text("Preflop: soglia = base - perOpp*(opp-1). Più avversari = soglie più basse."),
-
+          const Text(
+              "Preflop: soglia = base - perOpp*(opp-1). Più avversari = soglie più basse."),
           _slider(
             title: "Raise base (%)",
             value: s.preflopRaiseEqBase,
@@ -407,12 +403,10 @@ class _SetupScreenState extends State<SetupScreen> {
             decimals: 1,
             onChanged: (v) => s = s.copyWith(preflopCallEqPerOpp: v),
           ),
-
           const SizedBox(height: 16),
-
-          const Text("Postflop (se POT/BET non inseriti → modalità veloce solo equity)",
+          const Text(
+              "Postflop (se POT/BET non inseriti → modalità veloce solo equity)",
               style: TextStyle(fontWeight: FontWeight.bold)),
-
           _slider(
             title: "Raise (%)",
             value: s.postflopNoBetRaiseEq,
@@ -429,9 +423,7 @@ class _SetupScreenState extends State<SetupScreen> {
             decimals: 0,
             onChanged: (v) => s = s.copyWith(postflopNoBetCallEq: v),
           ),
-
           const SizedBox(height: 18),
-
           FilledButton(
             onPressed: () async {
               await _saveSettings();
@@ -443,12 +435,13 @@ class _SetupScreenState extends State<SetupScreen> {
             },
             child: const Padding(
               padding: EdgeInsets.symmetric(vertical: 14),
-              child: Text("INIZIA (NUOVA MANO)", style: TextStyle(fontSize: 18)),
+              child:
+                  Text("INIZIA (NUOVA MANO)", style: TextStyle(fontSize: 18)),
             ),
           ),
-
           const SizedBox(height: 10),
-          const Text("Nota: i pulsanti RAISE/CALL/FOLD NON bloccano nulla. Se fai CALL/CHECK puoi sempre andare avanti di street."),
+          const Text(
+              "Nota: i pulsanti RAISE/CALL/FOLD NON bloccano nulla. Se fai CALL/CHECK puoi sempre andare avanti di street."),
           const SizedBox(height: 20),
         ],
       ),

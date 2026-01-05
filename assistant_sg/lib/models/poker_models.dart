@@ -231,11 +231,15 @@ class AppSettings {
       callBufferEarly: ((m["callBufferEarly"] as num?) ?? 7).toDouble(),
       callBufferLate: ((m["callBufferLate"] as num?) ?? 10).toDouble(),
       preflopRaiseEqBase: ((m["preflopRaiseEqBase"] as num?) ?? 46).toDouble(),
-      preflopRaiseEqPerOpp: ((m["preflopRaiseEqPerOpp"] as num?) ?? 2.5).toDouble(),
+      preflopRaiseEqPerOpp:
+          ((m["preflopRaiseEqPerOpp"] as num?) ?? 2.5).toDouble(),
       preflopCallEqBase: ((m["preflopCallEqBase"] as num?) ?? 34).toDouble(),
-      preflopCallEqPerOpp: ((m["preflopCallEqPerOpp"] as num?) ?? 1.5).toDouble(),
-      postflopNoBetRaiseEq: ((m["postflopNoBetRaiseEq"] as num?) ?? 62).toDouble(),
-      postflopNoBetCallEq: ((m["postflopNoBetCallEq"] as num?) ?? 38).toDouble(),
+      preflopCallEqPerOpp:
+          ((m["preflopCallEqPerOpp"] as num?) ?? 1.5).toDouble(),
+      postflopNoBetRaiseEq:
+          ((m["postflopNoBetRaiseEq"] as num?) ?? 62).toDouble(),
+      postflopNoBetCallEq:
+          ((m["postflopNoBetCallEq"] as num?) ?? 38).toDouble(),
     );
   }
 }
@@ -302,11 +306,15 @@ class StyleProfile {
       callBufferEarly: ((m["callBufferEarly"] as num?) ?? 7).toDouble(),
       callBufferLate: ((m["callBufferLate"] as num?) ?? 10).toDouble(),
       preflopRaiseEqBase: ((m["preflopRaiseEqBase"] as num?) ?? 46).toDouble(),
-      preflopRaiseEqPerOpp: ((m["preflopRaiseEqPerOpp"] as num?) ?? 2.5).toDouble(),
+      preflopRaiseEqPerOpp:
+          ((m["preflopRaiseEqPerOpp"] as num?) ?? 2.5).toDouble(),
       preflopCallEqBase: ((m["preflopCallEqBase"] as num?) ?? 34).toDouble(),
-      preflopCallEqPerOpp: ((m["preflopCallEqPerOpp"] as num?) ?? 1.5).toDouble(),
-      postflopNoBetRaiseEq: ((m["postflopNoBetRaiseEq"] as num?) ?? 62).toDouble(),
-      postflopNoBetCallEq: ((m["postflopNoBetCallEq"] as num?) ?? 38).toDouble(),
+      preflopCallEqPerOpp:
+          ((m["preflopCallEqPerOpp"] as num?) ?? 1.5).toDouble(),
+      postflopNoBetRaiseEq:
+          ((m["postflopNoBetRaiseEq"] as num?) ?? 62).toDouble(),
+      postflopNoBetCallEq:
+          ((m["postflopNoBetCallEq"] as num?) ?? 38).toDouble(),
     );
   }
 }

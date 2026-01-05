@@ -77,7 +77,8 @@ class SettingsStore {
 
   static Future<void> upsertProfile(String name, AppSettings s) async {
     final profiles = await loadProfiles();
-    final idx = profiles.indexWhere((p) => p.name.toLowerCase() == name.toLowerCase());
+    final idx =
+        profiles.indexWhere((p) => p.name.toLowerCase() == name.toLowerCase());
     final newP = styleFromSettings(s, name);
 
     if (idx >= 0) {

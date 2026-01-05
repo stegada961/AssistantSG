@@ -64,7 +64,8 @@ class _HandScreenState extends State<HandScreen> {
   static const suitSymbol = {0: "♠", 1: "♥", 2: "♦", 3: "♣"};
   static const suitName = {0: "Picche", 1: "Cuori", 2: "Quadri", 3: "Fiori"};
 
-  Color suitColor(int suit) => (suit == 1 || suit == 2) ? Colors.red : Colors.black;
+  Color suitColor(int suit) =>
+      (suit == 1 || suit == 2) ? Colors.red : Colors.black;
 
   @override
   void initState() {
@@ -182,11 +183,14 @@ class _HandScreenState extends State<HandScreen> {
   ActionRec _combineAdvice(ActionRec base, double e) {
     if (street == Street.preflop) {
       final opp = (playersInHand - 1).clamp(1, 8);
-      final raiseTh = clampd(s.preflopRaiseEqBase - s.preflopRaiseEqPerOpp * (opp - 1), 15, 75);
-      final callTh = clampd(s.preflopCallEqBase - s.preflopCallEqPerOpp * (opp - 1), 10, 75);
+      final raiseTh = clampd(
+          s.preflopRaiseEqBase - s.preflopRaiseEqPerOpp * (opp - 1), 15, 75);
+      final callTh = clampd(
+          s.preflopCallEqBase - s.preflopCallEqPerOpp * (opp - 1), 10, 75);
 
       if (e >= raiseTh) return ActionRec.raise;
-      if (e >= callTh) return base == ActionRec.raise ? ActionRec.raise : ActionRec.call;
+      if (e >= callTh)
+        return base == ActionRec.raise ? ActionRec.raise : ActionRec.call;
       return ActionRec.fold;
     }
 
@@ -207,8 +211,10 @@ class _HandScreenState extends State<HandScreen> {
     final opp = (playersInHand - 1).clamp(1, 8);
 
     if (street == Street.preflop) {
-      final raiseTh = clampd(s.preflopRaiseEqBase - s.preflopRaiseEqPerOpp * (opp - 1), 15, 75);
-      final callTh = clampd(s.preflopCallEqBase - s.preflopCallEqPerOpp * (opp - 1), 10, 75);
+      final raiseTh = clampd(
+          s.preflopRaiseEqBase - s.preflopRaiseEqPerOpp * (opp - 1), 15, 75);
+      final callTh = clampd(
+          s.preflopCallEqBase - s.preflopCallEqPerOpp * (opp - 1), 10, 75);
 
       return "Preflop • ${pos.label} • vs $opp\n"
           "Range base: ${base.name.toUpperCase()} • Equity: ${e.toStringAsFixed(1)}%\n"
@@ -330,7 +336,9 @@ class _HandScreenState extends State<HandScreen> {
         border: Border.all(color: Colors.black.withValues(alpha: 0.15)),
         color: Colors.white,
       ),
-      child: Text(txt, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: col)),
+      child: Text(txt,
+          style:
+              TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: col)),
     );
   }
 
@@ -339,7 +347,8 @@ class _HandScreenState extends State<HandScreen> {
     final pieces = <Widget>[];
 
     if (street.index >= Street.turn.index) {
-      pieces.add(const Text("FLOP:", style: TextStyle(fontWeight: FontWeight.bold)));
+      pieces.add(
+          const Text("FLOP:", style: TextStyle(fontWeight: FontWeight.bold)));
       pieces.add(const SizedBox(width: 8));
       pieces.add(_chipCard(f1));
       pieces.add(const SizedBox(width: 6));
@@ -350,14 +359,16 @@ class _HandScreenState extends State<HandScreen> {
 
     if (street.index >= Street.river.index) {
       pieces.add(const SizedBox(width: 14));
-      pieces.add(const Text("TURN:", style: TextStyle(fontWeight: FontWeight.bold)));
+      pieces.add(
+          const Text("TURN:", style: TextStyle(fontWeight: FontWeight.bold)));
       pieces.add(const SizedBox(width: 8));
       pieces.add(_chipCard(t));
     }
 
     if (street == Street.river) {
       pieces.add(const SizedBox(width: 14));
-      pieces.add(const Text("RIVER:", style: TextStyle(fontWeight: FontWeight.bold)));
+      pieces.add(
+          const Text("RIVER:", style: TextStyle(fontWeight: FontWeight.bold)));
       pieces.add(const SizedBox(width: 8));
       pieces.add(_chipCard(r));
     }
@@ -399,7 +410,8 @@ class _HandScreenState extends State<HandScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Range (13×13)", style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text("Range (13×13)",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -412,7 +424,9 @@ class _HandScreenState extends State<HandScreen> {
                   final suited = (hi < lo);
                   final a = hi >= lo ? hi : lo;
                   final b = hi >= lo ? lo : hi;
-                  final lab = (a == b) ? cellLabel(a, b, false) : cellLabel(a, b, suited);
+                  final lab = (a == b)
+                      ? cellLabel(a, b, false)
+                      : cellLabel(a, b, suited);
 
                   return Container(
                     width: 26,
@@ -423,7 +437,8 @@ class _HandScreenState extends State<HandScreen> {
                       color: cellColor(lab),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(rankLabel[a]!, style: const TextStyle(fontSize: 10)),
+                    child: Text(rankLabel[a]!,
+                        style: const TextStyle(fontSize: 10)),
                   );
                 }).toList(),
               );
@@ -431,7 +446,8 @@ class _HandScreenState extends State<HandScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text("Verde=Raise • Giallo=Call • Rosso=Fold", style: TextStyle(fontSize: 12)),
+        const Text("Verde=Raise • Giallo=Call • Rosso=Fold",
+            style: TextStyle(fontSize: 12)),
       ],
     );
   }
@@ -446,12 +462,14 @@ class _HandScreenState extends State<HandScreen> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.black.withValues(alpha: 0.08))),
+          border: Border(
+              bottom: BorderSide(color: Colors.black.withValues(alpha: 0.08))),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("${street.name.toUpperCase()} • ${pos.label}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text("${street.name.toUpperCase()} • ${pos.label}",
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
             _heroSummary(),
             const SizedBox(height: 10),
@@ -461,8 +479,13 @@ class _HandScreenState extends State<HandScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    e == null ? "Equity: —" : "Equity: ${e.toStringAsFixed(1)}%",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color),
+                    e == null
+                        ? "Equity: —"
+                        : "Equity: ${e.toStringAsFixed(1)}%",
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: color),
                   ),
                 ),
                 IconButton(
@@ -480,7 +503,9 @@ class _HandScreenState extends State<HandScreen> {
                   child: FilledButton.icon(
                     onPressed: () {},
                     style: FilledButton.styleFrom(
-                      backgroundColor: rec == ActionRec.raise ? Colors.green : Colors.green.withValues(alpha: 0.25),
+                      backgroundColor: rec == ActionRec.raise
+                          ? Colors.green
+                          : Colors.green.withValues(alpha: 0.25),
                     ),
                     icon: const Icon(Icons.trending_up),
                     label: const Text("RAISE"),
@@ -491,10 +516,13 @@ class _HandScreenState extends State<HandScreen> {
                   child: FilledButton.icon(
                     onPressed: nextStreet,
                     style: FilledButton.styleFrom(
-                      backgroundColor: rec == ActionRec.call ? Colors.orange : Colors.orange.withValues(alpha: 0.25),
+                      backgroundColor: rec == ActionRec.call
+                          ? Colors.orange
+                          : Colors.orange.withValues(alpha: 0.25),
                     ),
                     icon: const Icon(Icons.check_circle_outline),
-                    label: Text(street == Street.river ? "NUOVA MANO" : "CALL/CHECK →"),
+                    label: Text(
+                        street == Street.river ? "NUOVA MANO" : "CALL/CHECK →"),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -502,7 +530,9 @@ class _HandScreenState extends State<HandScreen> {
                   child: FilledButton.icon(
                     onPressed: () => newHand(rotatePos: true),
                     style: FilledButton.styleFrom(
-                      backgroundColor: rec == ActionRec.fold ? Colors.red : Colors.red.withValues(alpha: 0.25),
+                      backgroundColor: rec == ActionRec.fold
+                          ? Colors.red
+                          : Colors.red.withValues(alpha: 0.25),
                     ),
                     icon: const Icon(Icons.close),
                     label: const Text("FOLD"),
@@ -520,7 +550,8 @@ class _HandScreenState extends State<HandScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: Text("Giocatori in mano (te incluso): $playersInHand")),
+            Expanded(
+                child: Text("Giocatori in mano (te incluso): $playersInHand")),
             IconButton(
               onPressed: () {
                 setState(() => playersInHand = (playersInHand - 1).clamp(2, 9));
@@ -538,14 +569,15 @@ class _HandScreenState extends State<HandScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        Text("SB ${s.sb} / BB ${s.bb} • Ante ${s.ante} • ${s.mode == GameMode.cash ? "Cash" : "Torneo"}"),
+        Text(
+            "SB ${s.sb} / BB ${s.bb} • Ante ${s.ante} • ${s.mode == GameMode.cash ? "Cash" : "Torneo"}"),
         const Divider(height: 26),
 
         // HERO picker SOLO preflop
         if (street == Street.preflop) ...[
-          const Text("HERO (solo preflop)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text("HERO (solo preflop)",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           const Text("Carta 1 (rank)"),
           ChipPicker<int>(
             values: ranks,
@@ -567,9 +599,7 @@ class _HandScreenState extends State<HandScreen> {
               trigger();
             },
           ),
-
           const SizedBox(height: 14),
-
           const Text("Carta 2 (rank)"),
           ChipPicker<int>(
             values: ranks,
@@ -599,7 +629,6 @@ class _HandScreenState extends State<HandScreen> {
           const Text("FLOP (si aggiorna anche con 1 carta)",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           const Text("Flop 1 (rank)"),
           ChipPicker<int>(
             values: ranks,
@@ -622,7 +651,6 @@ class _HandScreenState extends State<HandScreen> {
             },
           ),
           const SizedBox(height: 12),
-
           const Text("Flop 2 (rank)"),
           ChipPicker<int>(
             values: ranks,
@@ -645,7 +673,6 @@ class _HandScreenState extends State<HandScreen> {
             },
           ),
           const SizedBox(height: 12),
-
           const Text("Flop 3 (rank)"),
           ChipPicker<int>(
             values: ranks,
@@ -667,15 +694,14 @@ class _HandScreenState extends State<HandScreen> {
               trigger();
             },
           ),
-
           const Divider(height: 26),
         ],
 
         // TURN picker SOLO durante turn (flop non più selezionabile, sta sopra nel riepilogo)
         if (street == Street.turn) ...[
-          const Text("TURN", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text("TURN",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           const Text("Turn (rank)"),
           ChipPicker<int>(
             values: ranks,
@@ -697,15 +723,14 @@ class _HandScreenState extends State<HandScreen> {
               trigger();
             },
           ),
-
           const Divider(height: 26),
         ],
 
         // RIVER picker SOLO durante river (flop+turn non più selezionabili, stanno sopra nel riepilogo)
         if (street == Street.river) ...[
-          const Text("RIVER", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text("RIVER",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           const Text("River (rank)"),
           ChipPicker<int>(
             values: ranks,
@@ -727,13 +752,13 @@ class _HandScreenState extends State<HandScreen> {
               trigger();
             },
           ),
-
           const Divider(height: 26),
         ],
 
         // Pot/Bet (solo postflop) - opzionale
         if (street != Street.preflop) ...[
-          const Text("POT/BET (opzionale)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text("POT/BET (opzionale)",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -742,7 +767,8 @@ class _HandScreenState extends State<HandScreen> {
                 width: 140,
                 child: TextField(
                   controller: potCtl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(hintText: "es. 0.20"),
                   onChanged: (_) => trigger(),
                 ),
@@ -757,7 +783,8 @@ class _HandScreenState extends State<HandScreen> {
                 width: 140,
                 child: TextField(
                   controller: betCtl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(hintText: "es. 0.06"),
                   onChanged: (_) => trigger(),
                 ),
