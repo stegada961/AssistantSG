@@ -189,8 +189,9 @@ class _HandScreenState extends State<HandScreen> {
           s.preflopCallEqBase - s.preflopCallEqPerOpp * (opp - 1), 10, 75);
 
       if (e >= raiseTh) return ActionRec.raise;
-      if (e >= callTh)
+      if (e >= callTh) {
         return base == ActionRec.raise ? ActionRec.raise : ActionRec.call;
+      }
       return ActionRec.fold;
     }
 
