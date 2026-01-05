@@ -1,0 +1,20 @@
+workflows:
+  android-workflow:
+    name: AssistantSG APK
+    max_build_duration: 60
+    environment:
+      flutter: stable
+    scripts:
+      - |
+        set -e
+        echo "== ROOT ==" && pwd && ls -la
+        cd assistant_sg
+        echo "== FLUTTER PROJECT ==" && pwd && ls -la
+        echo "== FLUTTER VERSION ==" && flutter --version
+        echo "== PUB GET ==" && flutter pub get
+        echo "== FORMAT CHECK ==" && dart format . --set-exit-if-changed
+        echo "== ANALYZE ==" && flutter analyze
+        echo "== TEST ==" && flutter test
+        echo "== BUILD APK ==" && flutter build apk --release
+    artifacts:
+      - assistant_sg/build/app/outputs/flutter-apk/app-release.apk
