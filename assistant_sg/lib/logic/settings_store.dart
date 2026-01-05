@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/poker_models.dart';
 
 class SettingsStore {
@@ -12,6 +14,8 @@ class SettingsStore {
 
     try {
       final m = json.decode(raw) as Map<String, dynamic>;
+      final defaults = AppSettings.defaults();
+
       return AppSettings(
         mode: GameMode.values[m["mode"] as int],
         playersAtTable: m["playersAtTable"] as int,
@@ -24,14 +28,22 @@ class SettingsStore {
         openRaisePctByPos: (m["openRaisePctByPos"] as List)
             .map((x) => (x as num).toDouble())
             .toList(),
-        callBufferEarly: (m["callBufferEarly"] as num).toDouble(),
-        callBufferLate: (m["callBufferLate"] as num).toDouble(),
-        preflopRaiseEqBase: (m["preflopRaiseEqBase"] as num).toDouble(),
-        preflopRaiseEqPerOpp: (m["preflopRaiseEqPerOpp"] as num).toDouble(),
-        preflopCallEqBase: (m["preflopCallEqBase"] as num).toDouble(),
-        preflopCallEqPerOpp: (m["preflopCallEqPerOpp"] as num).toDouble(),
-        postflopNoBetRaiseEq: (m["postflopNoBetRaiseEq"] as num).toDouble(),
-        postflopNoBetCallEq: (m["postflopNoBetCallEq"] as num).toDouble(),
+        callBufferEarly: (m["callBufferEarly"] as num?)?.toDouble() ??
+            defaults.callBufferEarly,
+        callBufferLate: (m["callBufferLate"] as num?)?.toDouble() ??
+            defaults.callBufferLate,
+        preflopRaiseEqBase: (m["preflopRaiseEqBase"] as num?)?.toDouble() ??
+            defaults.preflopRaiseEqBase,
+        preflopRaiseEqPerOpp: (m["preflopRaiseEqPerOpp"] as num?)?.toDouble() ??
+            defaults.preflopRaiseEqPerOpp,
+        preflopCallEqBase: (m["preflopCallEqBase"] as num?)?.toDouble() ??
+            defaults.preflopCallEqBase,
+        preflopCallEqPerOpp: (m["preflopCallEqPerOpp"] as num?)?.toDouble() ??
+            defaults.preflopCallEqPerOpp,
+        postflopNoBetRaiseEq: (m["postflopNoBetRaiseEq"] as num?)?.toDouble() ??
+            defaults.postflopNoBetRaiseEq,
+        postflopNoBetCallEq: (m["postflopNoBetCallEq"] as num?)?.toDouble() ??
+            defaults.postflopNoBetCallEq,
       );
     } catch (_) {
       return AppSettings.defaults();
